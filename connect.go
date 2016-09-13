@@ -46,7 +46,7 @@ func (s CLinkServer)Connect(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if !s.AuthenticateRequest(w, r, body, connect_request){
+	if !s.AuthenticateRequest(w, r, body, &connect_request){
 		return
 	}
 
