@@ -19,8 +19,8 @@ func main(){
 	backendFormatter := logging.NewBackendFormatter(backend, format)
 	logging.SetBackend(backendFormatter)
 
-	server, err := server.NewServer("/tmp/clink.sqlite3", logging.MustGetLogger("server"))
-	defer server.Close()
+	srv, err := server.NewServer("/tmp/clink.sqlite3", logging.MustGetLogger("server"))
+	defer srv.Close()
 
 	if(err != nil){
 		panic("Error opening db:" + err.Error())
@@ -28,7 +28,7 @@ func main(){
 
 	router := mux.NewRouter().StrictSlash(true)
 
-	router.HandleFunc("/connect", server.Connect).
+	router.HandleFunc("/connect", srv.Connect).
 		Methods("POST").
 		Headers("Content-Type", "application/json")
 
