@@ -12,6 +12,7 @@ import (
 	"io"
 	"crypto/rand"
 	"fmt"
+	"errors"
 )
 
 
@@ -89,11 +90,52 @@ func EncryptPassword(password string) string{
 
 	cost := bcrypt.DefaultCost
 
-	hashed_password, err := bcrypt.GenerateFromPassword([]byte(password), cost)
+	full_password := append(salt,[]byte(password)...)
+
+	hashed_password, err := bcrypt.GenerateFromPassword(full_password, cost)
 
 	if err != nil {
 		panic(err)
 	}
 
 	return fmt.Sprintf("bcrypt$%d$%x$%x", cost, salt, hashed_password)
+}
+
+func ComparePassword(encrypted string, password string) (bool,error){
+	parts := strings.Split(encrypted, "$")
+
+	if parts[0] != "bcrypt"{
+		return false, errors.New("Only bcrypt is supported at the moment")
+	}
+
+	var cost int
+	_, err := fmt.Sscanf(parts[1], "%d", &cost)
+
+	if err != nil {
+		return false, errors.New("Bad cost")
+	}
+
+	salt, err := hex.DecodeString(parts[2])
+
+	if err != nil {
+		return false, errors.New("Bad salt")
+	}
+
+	expected, err := hex.DecodeString(parts[3])
+
+	if err != nil {
+		return false, errors.New("Bad expected")
+	}
+
+	full_password := append(salt, []byte(password)...)
+
+	err = bcrypt.CompareHashAndPassword(expected, full_password)
+
+	if err == nil {
+		return true, nil
+	} else if err == bcrypt.ErrMismatchedHashAndPassword {
+		return false, nil
+	} else {
+		return false, errors.New("Failed to compare:" + err.Error())
+	}
 }
